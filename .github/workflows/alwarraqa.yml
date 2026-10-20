@@ -1,0 +1,37 @@
+name: AlWarraqa — Build signed Android APK
+on:
+  push:
+    branches: [alwarraqa-android]
+    paths:
+      - 'alwarraqa.parts/**'
+      - '.github/workflows/alwarraqa.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source archive and unpack standalone app
+        shell: bash
+        run: |
+          cat alwarraqa.parts/part{0..4} | base64 -d > /tmp/alwarraqa.tar.xz
+          echo "c72537416169554ac0add7205123375808a3bc89cea0ff346712418ed5bffe38  /tmp/alwarraqa.tar.xz" | sha256sum -c -
+          mkdir -p alwarraqa
+          tar -xJf /tmp/alwarraqa.tar.xz -C alwarraqa
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Compile and debug-sign APK
+        run: gradle --no-daemon -p alwarraqa :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AlWarraqa-1.0-APK-debug-signed
+          path: alwarraqa/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
