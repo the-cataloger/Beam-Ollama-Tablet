@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c1520">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Beam | Ollama Cloud</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<div id="app" class="app">
+  <div class="mobile-shade" id="shade"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M17 2 5 18h10l-2 12 14-19H16l1-9Z" fill="currentColor"/></svg></div>
+      <div class="brand-copy"><strong>BEAM <span>SPACE</span></strong><small>OL LAMA CLOUD <span class="brand-dot">●</span> 1.0</small></div>
+      <button class="plain-icon close-drawer" id="closeDrawer" aria-label="إغلاق القائمة">✕</button>
+    </div>
+    <div class="sidebar-main">
+      <button class="new-btn" id="newChat"><span class="plus-icon">＋</span> <span>محادثة جديدة</span><span class="new-short">NEW</span></button>
+      <div class="side-section-heading"><span>المحادثات المحفوظة</span> <span id="chatCount">0</span></div>
+      <div class="conversation-list" id="conversationList"></div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="mini-note"><span class="mini-note-icon">◈</span><div><strong>تعمل المعالجة في السحابة</strong><small>الرسائل المرسلة تصل إلى Ollama</small></div></div>
+      <button class="settings-button" id="openSettings"><span class="settings-glyph">⚙</span><span>الاتصال والإعدادات</span><span class="settings-arrow">↗</span></button>
+    </div>
+  </aside>
+
+  <section class="main-area">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="plain-icon menu-toggle" id="menuToggle" aria-label="القائمة">☰</button>
+        <div class="model-mark">B</div>
+        <div class="model-name"><strong>Beam</strong><div><span class="tiny-cloud">☁</span> Reflection · Ollama Cloud</div></div>
+        <span class="model-tag">501B</span>
+      </div>
+      <div class="top-right">
+        <span class="connection-label" id="connectionLabel"><span class="status-light"></span><span id="statusLabel">المفتاح غير مضبوط</span></span>
+        <button class="header-action" id="exportBtn" title="تصدير المحادثة" aria-label="تصدير المحادثة">⇩ <span>تصدير</span></button>
+        <button class="header-action small-settings" id="headerSettings" title="الإعدادات" aria-label="الإعدادات">⚙</button>
+      </div>
+    </header>
+
+    <main class="thread" id="thread">
+      <div class="welcome" id="welcome">
+        <div class="welcome-emblem"><span class="emblem-center">B</span><span class="emblem-orbit one"></span><span class="emblem-orbit two"></span></div>
+        <span class="eyebrow">YOUR INTELLIGENT WORKSPACE</span>
+        <h1>مساحة تفكير <span>أوسع.</span></h1>
+        <p class="welcome-description">تحدث مع <b>Beam</b> عبر Ollama Cloud. اطرح الأسئلة، حلّل البيانات، طوّر البرمجيات، واحتفظ بمحادثاتك على التابلت.</p>
+        <div class="prompt-grid">
+          <button class="prompt-card" data-prompt="اقترح معمارية تقنية آمنة لوكيل فهرسة ببليوجرافية يستخدم MARC21 وRDA وقاعدة بيانات SQLite."><span class="prompt-icon">⌘</span><strong>وكيل الفهرسة</strong><span>تصميم نظام ببليوجرافي ذكي</span><i>↗</i></button>
+          <button class="prompt-card" data-prompt="صمّم آلية للتحقق من استعلامات SQL التي يولّدها نموذج لغوي قبل تنفيذها على قاعدة بيانات ببليوجرافية."><span class="prompt-icon">⌁</span><strong>قواعد البيانات</strong><span>مراجعة الأمان والاستعلامات</span><i>↗</i></button>
+          <button class="prompt-card" data-prompt="اقترح منهجًا تجريبيًا صارمًا لتقييم جودة استخراج البيانات الوصفية العربية من فهارس المخطوطات المطبوعة."><span class="prompt-icon">◈</span><strong>تقييم بحثي</strong><span>صياغة تجارب علمية دقيقة</span><i>↗</i></button>
+          <button class="prompt-card" data-prompt="اكتب برنامج Python يقرأ ملفات CSV متعددة ويكتشف التكرارات اعتمادًا على العنوان واسم المؤلف، مع فصل المطابقات المحتملة عن المؤكدة."><span class="prompt-icon">{ }</span><strong>مساعدة برمجية</strong><span>Python ومعالجة البيانات</span><i>↗</i></button>
+        </div>
+      </div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </main>
+
+    <footer class="composer-shell">
+      <div class="token-meta" id="tokenMeta"><span class="meta-icon">◇</span> <span>نموذج سحابي نصّي • تتوقف مجانية Beam على سياسة Ollama الحالية</span></div>
+      <div class="composer">
+        <textarea id="userInput" rows="1" maxlength="45000" placeholder="اكتب رسالتك إلى Beam..." aria-label="رسالتك"></textarea>
+        <div class="composer-toolbar">
+          <span class="composer-hint"><span class="kbd">Enter</span> للإرسال · <span class="kbd">Shift + Enter</span> لسطر جديد</span>
+          <div class="composer-actions">
+            <span id="charCount" class="char-count"></span>
+            <button class="send-btn" id="sendBtn" title="إرسال" aria-label="إرسال"><span id="sendIcon">↑</span><span id="stopIcon" style="display:none">■</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="footer-note">قد يخطئ النموذج. تحقّق من البيانات العلمية والمخرجات البرمجية قبل اعتمادها.</div>
+    </footer>
+  </section>
+</div>
+
+<div class="modal-scrim" id="settingsScrim" role="presentation"></div>
+<div class="modal" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsHeading" aria-hidden="true">
+  <div class="modal-top"><div><span class="modal-overline">CONFIGURATION</span><h2 id="settingsHeading">الاتصال والإعدادات</h2></div><button class="plain-icon modal-close" id="closeSettings" aria-label="إغلاق">✕</button></div>
+  <div class="modal-body">
+    <div class="setting-group"><div class="setting-title"><span class="setting-num">01</span><div><strong>مفتاح Ollama API</strong><span>يُحفظ مشفّرًا في مساحة التطبيق الأصلية على الجهاز</span></div></div>
+      <div class="key-input-wrap"><input dir="ltr" type="password" id="apiKey" placeholder="ollama_••••••••••••" autocomplete="off" spellcheck="false"><button id="toggleKey" type="button" aria-label="إظهار أو إخفاء المفتاح">◉</button></div>
+      <div class="key-controls"><button class="primary-btn" id="saveKey">حفظ المفتاح</button><button class="outline-btn" id="removeKey">حذف المفتاح</button><span class="key-info" id="keyInfo">لا يوجد مفتاح محفوظ</span></div>
+      <a class="external-link" href="https://ollama.com/settings/keys">إنشاء مفتاح من موقع Ollama الرسمي ↗</a>
+    </div>
+    <div class="setting-group"><div class="setting-title"><span class="setting-num">02</span><div><strong>الموديل ونطاق التشغيل</strong><span>اتصال مباشر ومشفّر بخوادم Ollama</span></div></div>
+      <div class="setting-detail"><span>النموذج</span><strong dir="ltr">beam</strong></div><div class="setting-detail"><span>الواجهة البرمجية</span><span class="mono">ollama.com/api/chat</span></div><div class="setting-detail"><span>طريقة الاتصال</span><span>HTTPS عبر Android (خارج WebView)</span></div>
+    </div>
+    <div class="setting-group"><div class="setting-title"><span class="setting-num">03</span><div><strong>تفضيلات الاستجابة</strong><span>تُرسل هذه الإعدادات مع المحادثة إلى النموذج</span></div></div>
+      <label class="field-label" for="tempRange"><span>درجة التنوع (Temperature)</span><strong id="tempValue">0.4</strong></label><input type="range" id="tempRange" min="0" max="1" step="0.1" value="0.4">
+      <label class="field-label" for="systemPrompt">تعليمات النظام الإضافية</label><textarea id="systemPrompt" class="system-textarea" rows="3" maxlength="1800" placeholder="مثال: أجب دائمًا بالعربية الفصحى..."></textarea>
+    </div>
+    <div class="privacy"><strong>تنبيه الخصوصية</strong><p>يبقى المفتاح المشفر محليًا. تُرسل نصوص المحادثة اللازمة إلى خدمة Ollama Cloud للمعالجة؛ لا ترسل سجلات مؤسسية سرية دون تصريح. المحادثات محفوظة محليًا داخل مساحة WebView، وليست مشفّرة بنظام Keystore.</p></div>
+  </div>
+  <div class="modal-bottom"><button class="primary-btn" id="doneSettings">تم</button></div>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
