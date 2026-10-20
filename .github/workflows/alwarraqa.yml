@@ -20,6 +20,7 @@ jobs:
           echo "c72537416169554ac0add7205123375808a3bc89cea0ff346712418ed5bffe38  /tmp/alwarraqa.tar.xz" | sha256sum -c -
           mkdir -p alwarraqa
           tar -xJf /tmp/alwarraqa.tar.xz -C alwarraqa
+          sed -i '/import androidx.activity.ComponentActivity/a import androidx.activity.compose.setContent' alwarraqa/app/src/main/java/com/alwarraqa/app/MainActivity.kt
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
