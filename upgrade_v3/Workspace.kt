@@ -87,7 +87,7 @@ class ResearchWorkbenchActivity:ComponentActivity(){
     private fun selectNote(n:Note?){
         save();active=n
         study=if(n==null)WitnessStudy(-1)else studies.get(n.id).let{
-            if(it.updatedAt==0&&n.interpretation.isNotBlank())it.copy(transcription=n.interpretation)else it
+            if(it.updatedAt==0L&&n.interpretation.isNotBlank())it.copy(transcription=n.interpretation)else it
         }
         if(n!=null)viewer?.focus(n)
     }
