@@ -464,11 +464,7 @@ class QoyoodActivity: ComponentActivity() {
                 }){Text("استبدل المحدد")}
             }
             Text("مسودة البحث • تُحفظ تلقائيًا داخل الجهاز كل نصف ثانية",color=Color.Gray,fontSize=11.sp)
-            if(preview)Surface(Modifier.fillMaxSize(),color=Color.White,shape=RoundedCornerShape(10.dp)){
-                Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp)){
-                    Text(draft.text.ifBlank{"لا يوجد نص للمعاينة."},fontSize=16.sp,lineHeight=27.sp,color=ink)
-                }
-            } else OutlinedTextField(draft,onValueChange={updateText(it)},
+            if(preview) QoyoodMarkdownPreview(draft.text) else OutlinedTextField(draft,onValueChange={updateText(it)},
                 modifier=Modifier.fillMaxSize(),
                 textStyle=androidx.compose.ui.text.TextStyle(fontSize=17.sp,lineHeight=29.sp,textAlign=TextAlign.Start),
                 placeholder={Text("ابدأ بصياغة الدراسة... يمكنك إضافة نتائج تحليل الشواهد مع مراجعتها.")})
