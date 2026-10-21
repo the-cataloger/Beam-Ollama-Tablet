@@ -1,0 +1,66 @@
+name: Qoyood 3 - Native Android APK
+on:
+  push:
+    branches: [qoyood-workbench-v3]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild and verify previous codebase
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat alwarraqa.parts/part{0..4} | base64 -d > /tmp/source.tar.xz
+          echo "c72537416169554ac0add7205123375808a3bc89cea0ff346712418ed5bffe38  /tmp/source.tar.xz" | sha256sum -c -
+          mkdir -p alwarraqa
+          tar -xJf /tmp/source.tar.xz -C alwarraqa
+          python3 upgrade/setup.py
+          sed -i '/import androidx.activity.ComponentActivity/a import androidx.activity.compose.setContent' alwarraqa/app/src/main/java/com/alwarraqa/app/MainActivity.kt
+          python3 upgrade_v3/install.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configure Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="/usr/local/lib/android/sdk"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          test -x "$SDKMANAGER"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Compile native Kotlin app and sign debug APK
+        run: gradle --no-daemon -p alwarraqa :app:assembleDebug
+      - name: Verify APK signature and prepare named download
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp alwarraqa/app/build/outputs/apk/debug/app-debug.apk dist/Qoyood-Research-3.0-debug-signed.apk
+          /usr/local/lib/android/sdk/build-tools/35.0.0/apksigner verify --verbose dist/Qoyood-Research-3.0-debug-signed.apk
+          sha256sum dist/*.apk > dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Qoyood-Research-v3-Debug-Signed-APK
+          path: dist/
+          if-no-files-found: error
+      - name: Pack reproducible complete source project
+        run: |
+          cd alwarraqa
+          zip -q -r ../Qoyood-Research-v3-Source.zip . -x '*/build/*' '*/.gradle/*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Qoyood-Research-v3-Source
+          path: Qoyood-Research-v3-Source.zip
+          if-no-files-found: error
