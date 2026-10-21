@@ -4,6 +4,13 @@ ROOT=Path("alwarraqa")
 K=ROOT/"app/src/main/java/com/alwarraqa/app"
 for f,d in [("Workspace.kt","Workspace.kt"),("Research.kt","Research.kt"),("Report.kt","WitnessReport.kt")]:
     shutil.copyfile(Path("upgrade_v3")/f,K/d)
+# Remove unreachable old UI / image-to-AI code; v3 sends researcher text only.
+(K/"QoyoodActivity.kt").unlink()
+legacy=K/"QoyoodBackend.kt"
+legacy_src=legacy.read_text()
+marker="/** Sends a sample-sized crop only when the user explicitly requests image analysis. */"
+assert marker in legacy_src
+legacy.write_text(legacy_src.split(marker)[0])
 gradle=ROOT/"app/build.gradle.kts"
 text=gradle.read_text()
 text=text.replace('applicationId = "com.alwarraqa.qoyood"', 'applicationId = "com.alwarraqa.qoyood.research"')
