@@ -10,7 +10,9 @@ legacy=K/"QoyoodBackend.kt"
 legacy_src=legacy.read_text()
 marker="/** Sends a sample-sized crop only when the user explicitly requests image analysis. */"
 assert marker in legacy_src
-legacy.write_text(legacy_src.split(marker)[0])
+legacy.write_text(legacy_src.split(marker)[0].replace(
+    "Only user-triggered calls transfer a cropped manuscript image to OpenRouter.",
+    "V3 sends only text that the researcher has entered explicitly; it never transmits manuscript images."))
 gradle=ROOT/"app/build.gradle.kts"
 text=gradle.read_text()
 text=text.replace('applicationId = "com.alwarraqa.qoyood"', 'applicationId = "com.alwarraqa.qoyood.research"')
