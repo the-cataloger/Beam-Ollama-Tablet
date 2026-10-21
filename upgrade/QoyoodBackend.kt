@@ -80,26 +80,49 @@ object OpenRouterVision {
     fun analyze(page:Page,note:Note?,key:String,model:String,extraPrompt:String):String {
         require(key.isNotBlank()){"أدخل مفتاح OpenRouter أولًا"}
         require(model.isNotBlank()){"حدد اسم نموذج يدعم الصور"}
-        val img=BitmapFactory.Options().apply {inJustDecodeBounds=true}
-        BitmapFactory.decodeFile(page.path,img)
-        require(img.outWidth>0 && img.outHeight>0){"تعذر قراءة الصورة"}
-        var sample=1
-        while(max(img.outWidth,img.outHeight)/sample>2400)sample*=2
-        val source=BitmapFactory.decodeFile(page.path,BitmapFactory.Options().apply {
-            inSampleSize=sample;inPreferredConfig=Bitmap.Config.ARGB_8888
-        })?:error("تعذر فك الصورة")
+        // Decode the native-resolution region, not a blurry thumbnail of the entire folio.
         val crop=try {
-            if(note==null)source else {
-                val l=(note.x*source.width).roundToInt().coerceIn(0,source.width-1)
-                val t=(note.y*source.height).roundToInt().coerceIn(0,source.height-1)
-                val r=((note.x+note.w)*source.width).roundToInt().coerceIn(l+1,source.width)
-                val b=((note.y+note.h)*source.height).roundToInt().coerceIn(t+1,source.height)
-                Bitmap.createBitmap(source,l,t,r-l,b-t)
+            @Suppress("DEPRECATION")
+            val decoder=android.graphics.BitmapRegionDecoder.newInstance(page.path,false)
+                ?: error("تعذر قراءة صورة المخطوط")
+            try {
+                val w=decoder.width
+                val h=decoder.height
+                val rect=if(note==null) Rect(0,0,w,h) else {
+                    val l=(note.x*w).roundToInt().coerceIn(0,w-1)
+                    val t=(note.y*h).roundToInt().coerceIn(0,h-1)
+                    val r=((note.x+note.w)*w).roundToInt().coerceIn(l+1,w)
+                    val b=((note.y+note.h)*h).roundToInt().coerceIn(t+1,h)
+                    Rect(l,t,r,b)
+                }
+                var sample=1
+                while(max(rect.width(),rect.height())/sample>2500)sample*=2
+                decoder.decodeRegion(rect,BitmapFactory.Options().apply{
+                    inSampleSize=sample
+                    inPreferredConfig=Bitmap.Config.ARGB_8888
+                })?:error("تعذر استخراج المنطقة")
+            }finally{decoder.recycle()}
+        }catch(_:Exception){
+            // Fallback for formats without region decoding.
+            val bounds=BitmapFactory.Options().apply{inJustDecodeBounds=true}
+            BitmapFactory.decodeFile(page.path,bounds)
+            require(bounds.outWidth>0&&bounds.outHeight>0){"الصورة غير صالحة"}
+            var sample=1
+            while(max(bounds.outWidth,bounds.outHeight)/sample>2600)sample*=2
+            val full=BitmapFactory.decodeFile(page.path,BitmapFactory.Options().apply{
+                inSampleSize=sample;inPreferredConfig=Bitmap.Config.ARGB_8888
+            })?:error("تعذر فتح الصورة")
+            if(note==null)full else{
+                val l=(note.x*full.width).roundToInt().coerceIn(0,full.width-1)
+                val t=(note.y*full.height).roundToInt().coerceIn(0,full.height-1)
+                val r=((note.x+note.w)*full.width).roundToInt().coerceIn(l+1,full.width)
+                val b=((note.y+note.h)*full.height).roundToInt().coerceIn(t+1,full.height)
+                Bitmap.createBitmap(full,l,t,r-l,b-t).also{if(it!==full)full.recycle()}
             }
-        }catch(e:Exception){source}
+        }
         val jpeg=ByteArrayOutputStream()
-        try {crop.compress(Bitmap.CompressFormat.JPEG,85,jpeg)}
-        finally { if(crop!==source)crop.recycle();source.recycle() }
+        try{crop.compress(Bitmap.CompressFormat.JPEG,86,jpeg)}
+        finally{crop.recycle()}
         val encoded="data:image/jpeg;base64,"+Base64.encodeToString(jpeg.toByteArray(),Base64.NO_WRAP)
         val instruction="""أنت باحث متخصص في علم المخطوط العربي، والتقييدات (التملك والوقف والإجازة والسماع والحرد).
 حلل الصورة بأمانة دون اختلاق كلمات لا تظهر فيها. أجب بالعربية وفق الأقسام:
