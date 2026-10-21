@@ -1,0 +1,57 @@
+name: Qoyood Analyzer - Build signed APK
+on:
+  push:
+    branches: [qoyood-analyzer-v2]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore verified original source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat alwarraqa.parts/part{0..4} | base64 -d > /tmp/source.tar.xz
+          echo "c72537416169554ac0add7205123375808a3bc89cea0ff346712418ed5bffe38  /tmp/source.tar.xz" | sha256sum -c -
+          mkdir -p alwarraqa
+          tar -xJf /tmp/source.tar.xz -C alwarraqa
+          python3 upgrade/setup.py
+          sed -i '/import androidx.activity.ComponentActivity/a import androidx.activity.compose.setContent' alwarraqa/app/src/main/java/com/alwarraqa/app/MainActivity.kt
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configure Android SDK 35
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="/usr/local/lib/android/sdk"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          test -x "$SDKMANAGER"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Compile Kotlin and sign debug APK
+        run: gradle --no-daemon -p alwarraqa :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Qoyood-Analyzer-v2-Signed-APK
+          path: alwarraqa/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Publish complete assembled source
+        run: |
+          cd alwarraqa
+          zip -q -r ../Qoyood-Analyzer-v2-Source.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Qoyood-Analyzer-v2-Source
+          path: Qoyood-Analyzer-v2-Source.zip
+          if-no-files-found: error
