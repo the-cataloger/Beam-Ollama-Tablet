@@ -141,9 +141,8 @@ object WitnessReport {
         <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
         <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
         Target="word/document.xml"/></Relationships>"""
-        val imageRels=images.joinToString(""){im->
-            """<Relationship Id=""""+""""+im.id+""""+""" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
-            Target="media/"""+im.name+""""+"""/>"""
+        val imageRels=images.joinToString("") { im ->
+            "<Relationship Id=\"" + im.id + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"media/" + im.name + "\"/>"
         }
         val docRels="""<?xml version="1.0" encoding="UTF-8"?>
         <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"""+
