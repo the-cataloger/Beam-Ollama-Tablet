@@ -33,6 +33,8 @@ jobs:
           gradle-version: '8.9'
       - name: Extract Android source
         run: tar -xzf alwarraqa/AlWarraqa-2.0-Android-Source.tar.gz
+      - name: Apply v2 preview-safe fixes
+        run: python3 alwarraqa/upgrade-preview.py
       - name: Android unit tests and debug APK
         working-directory: AlWarraqa-2.0-Android-Source
         run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
