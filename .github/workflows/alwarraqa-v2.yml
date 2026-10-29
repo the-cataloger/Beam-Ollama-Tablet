@@ -1,0 +1,46 @@
+name: AlWarraqa 2.0 Android APK
+on:
+  push:
+    branches: ['feature/alwarraqa-v2-20261029']
+  pull_request:
+    paths: ['alwarraqa/**', '.github/workflows/alwarraqa-v2.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configure installed Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="/usr/local/lib/android/sdk"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          test -x "$SDKMANAGER"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Extract Android source
+        run: tar -xzf alwarraqa/AlWarraqa-2.0-Android-Source.tar.gz
+      - name: Apply v2 preview-safe fixes
+        run: python3 alwarraqa/upgrade-preview.py
+      - name: Android unit tests and debug APK
+        working-directory: AlWarraqa-2.0-Android-Source
+        run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AlWarraqa-2.0-debug-apk
+          path: AlWarraqa-2.0-Android-Source/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
